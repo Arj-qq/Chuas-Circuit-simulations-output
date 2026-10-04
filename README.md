@@ -15,16 +15,15 @@ DT = 0.01  # Time step size for your LLM sequence generation and for bennettin r
 N_CONTEXT = 100      # Number of recorded trajectory points 100 * DT = 1 time unit of context, may change less or more based of more readings i do not sure, 100 seems safe.
 T_BURN = 100.0       # warm up period get it runnin
 T_MAX = 400.0        # LLE averaging horizon
-D0 = 1e-6            # Benettin separation (well above integrator noise; hopefully lmao)
+D0 = 1e-6            # Benettin separation (well above integrator noise; hopefully)
 RTOL, ATOL = 1e-10, 1e-12
 INIT_STATE = [0.1, 0.1, 0.1]
 LLE_CHAOS_THRESHOLD = 0.01  # LLE below this is treated as non-chaotic 
 
-# Piecewise-linear function for Chua's Diode
+# function for Chua's Diode
 def chua_diode(x):
     return M1 * x + 0.5 * (M0 - M1) * (np.abs(x + 1) - np.abs(x - 1))
 
-# 3D Vector field equations
 def chua_system(t, state, alpha):
     x, y, z = state
     dxdt = alpha * (y - x - chua_diode(x))
@@ -41,7 +40,7 @@ def integrate(state, t0, t1, alpha):
     return sol.y[:, -1]
  
  
-# 2.  Two-Trajectory LLE Estimation Method
+# 2.  Two-Trajectory LLE Estimation Method using benettin method
 def compute_lle_and_trajectory(alpha, t_max=T_MAX, dt=DT, d0=D0):
     # Pre-integrate to shed transient behavior
     state1 = integrate(INIT_STATE, 0.0, T_BURN, alpha)
@@ -77,7 +76,7 @@ def compute_lle_and_trajectory(alpha, t_max=T_MAX, dt=DT, d0=D0):
     return lle, np.array(trajectory_points)
  
  
-# 3. Process Regimes and Export Metrics Independently
+# 3. Process Regimes and import the data.
 for name, alpha in REGIMES.items():
     print(f"Processing and exporting files for {name} regime (alpha={alpha})...")
     lle, prompt_data = compute_lle_and_trajectory(alpha)
@@ -94,7 +93,7 @@ for name, alpha in REGIMES.items():
  
     # File A: Save isolated Lyapunov metrics for just this specific regime
     DECIMAL_PLACES = 4   # <<< NEW: named constants so the metrics file can record them
-    INT_SCALE = 1000     # <<< NEW
+    INT_SCALE = 1000.     # <<< NEW
  
     metrics_data = [{
         'Regime': name,
@@ -103,8 +102,8 @@ for name, alpha in REGIMES.items():
         'Largest_Lyapunov_Exponent_per_time_unit': round(lle, 4),
         'Lyapunov_Time_SystemUnits': round(lyap_time, 2) if lyap_time != float('inf') else 'Infinite',
         'Max_Predictable_Steps_Horizon': round(steps_limit, 1) if steps_limit != float('inf') else 'Infinite',
-        # <<< NEW: everything below documents how the number was produced
-        'Chaotic_Threshold_LLE': LLE_CHAOS_THRESHOLD,   # LLE below this -> 'Infinite' Lyapunov time
+        # <<< NEW: everything below documents how the number was produced and i added it for more clarifications.
+        'Chaotic_Threshold_LLE': LLE_CHAOS_THRESHOLD,  
         'Beta': round(BETA, 6),
         'm0_inner_slope': round(M0, 6),
         'm1_outer_slope': round(M1, 6),
@@ -124,7 +123,7 @@ for name, alpha in REGIMES.items():
  
     df_prompt = pd.DataFrame(prompt_data, columns=['X', 'Y', 'Z'])
  
-    # File B: Raw decimal format (DECIMAL_PLACES decimals). Kept as bare X,Y,Z so it is prompt-ready.
+    # File B: Raw decimal format (DECIMAL_PLACES decimals). Kept as bare X,Y,Z so it is prompt-ready n easy for me.
     df_prompt.round(DECIMAL_PLACES).to_csv(f'chua_prompt_snapshot_decimal_{name}.csv', index=False)
  
     # File C: Scaled integer format (value * INT_SCALE, rounded). Kept as bare X,Y,Z.
