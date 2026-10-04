@@ -12,7 +12,7 @@ BETA = 100/7
 M0 = -8/7
 M1 = -5/7
 DT = 0.01  # Time step size for your LLM sequence generation and for bennettin renormalization
-N_CONTEXT = 100      # Number of recorded trajectory points 100 * DT = 1 time unit of context, may change less or more based of more readings i do not sure, 100 seems safe.
+N_CONTEXT = 150      # Number of recorded trajectory points 100 * DT = 1 time unit of context, may change less or more based of more readings i do not sure, 100 seems safe.
 T_BURN = 100.0       # warm up period get it runnin
 T_MAX = 400.0        # LLE averaging horizon
 D0 = 1e-6            # Benettin separation (well above integrator noise; hopefully)
